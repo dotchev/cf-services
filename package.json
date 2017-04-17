@@ -1,0 +1,37 @@
+{
+  "name": "cf-services",
+  "version": "1.0.0",
+  "description": "Simple node package to lookup bound services in Cloud Foundry",
+  "main": "index.js",
+  "scripts": {
+    "test": "tap --100 test.js"
+  },
+  "files": [
+    "index.js",
+    "VCAP_SERVICES.png"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dotchev/cf-services.git"
+  },
+  "keywords": [
+    "cloudfoundry",
+    "vcap_services",
+    "services"
+  ],
+  "author": "Peter Dotchev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dotchev/cf-services/issues"
+  },
+  "homepage": "https://github.com/dotchev/cf-services",
+  "dependencies": {
+    "lodash": "^4.17.4"
+  },
+  "devDependencies": {
+    "tap": "^10.3.2"
+  },
+  "engines": {
+    "node": ">=4"
+  }
+}
