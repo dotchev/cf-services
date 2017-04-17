@@ -14,7 +14,8 @@ function services(query) {
     throw new Error('Could not parse environment variable VCAP_SERVICES: ' +
       err.message);
   }
-  let svc = _.keyBy(_.flatMap(vcapServices), 'name');
+  let svc = _(vcapServices).flatMap().filter(x => x.name).keyBy('name').value();
+  // let svc = _.keyBy(_.flatMap(vcapServices), 'name');
   if (typeof query === 'string') {
     return svc[query];
   }
