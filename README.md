@@ -13,6 +13,8 @@ the property values are arrays of service bindings.
 This makes it uncomfortable for applications to lookup required
 service bindings in a reliable way.
 
+See [this presentation][3] for more details.
+
 ## Install
 
 ```sh
@@ -23,14 +25,156 @@ npm install --save cf-services
 ```js
 const cfServices = require('cf-services');
 ```
-Parse *VCAP_SERVICES* and convert it to a flat object of service bindings using
-instance names as keys.
+For the following examples let's assume that environment variable VCAP_SERVICES has this value:
+```json
+{
+  "postgres": [
+    {
+      "label": "postgres",
+      "name": "postgres1",
+      "plan": "small",
+      "tags": ["postgresql", "sql", "db"],
+      "credentials": { ... }
+    },
+    {
+      "label": "postgres",
+      "name": "postgres2",
+      "plan": "large",
+      "tags": ["postgresql", "sql", "store"],
+      "credentials": { ... }
+    }
+  ],
+  "redis": [
+    {
+      "label": "redis",
+      "name": "redis1",
+      "plan": "small",
+      "tags": ["redis", "key-valye", "in-memory"],
+      "credentials": { ... }
+    },
+    {
+      "label": "redis",
+      "name": "redis2",
+      "plan": "large",
+      "tags": ["redis", "store"],
+      "credentials": { ... }
+    }
+  ]
+}
+```
+Parse *VCAP_SERVICES* and convert it to a flat object of service bindings using instance names as keys.
+```js
+let services = cfServices();
+```
+this will return:
+```json
+{
+  "postgres1": {
+    "label": "postgres",
+    "name": "postgres1",
+    "plan": "small",
+    "tags": ["postgresql", "sql", "db"],
+    "credentials": { ... }
+  },
+  "postgres2": {
+    "label": "postgres",
+    "name": "postgres2",
+    "plan": "large",
+    "tags": ["postgresql", "sql", "store"],
+    "credentials": { ... }
+  },
+  "redis1": {
+    "label": "redis",
+    "name": "redis1",
+    "plan": "small",
+    "tags": ["redis", "key-valye", "in-memory"],
+    "credentials": { ... }
+  },
+  "redis2": {
+    "label": "redis",
+    "name": "redis2",
+    "plan": "large",
+    "tags": ["redis", "store"],
+    "credentials": { ... }
+  }
+}
+```
+Now you can pick a binding directly like this
+```js
+let redis = services.redis1
+```
+Unfortunately the instance name is rarely known in advance, so you may pass it as a separate environment variable:
+```js
+let redis = services[process.env.REDIS_SERVICE_NAME];
+```
+To achieve this you can use a *manifest.yml* like this:
+```yml
+---
+  ...
+  env:
+    REDIS_SERVICE_NAME: redis1
+  services:
+    - redis1
+```
+You can also look up service bindings with matching properties.
+For example this
+```js
+cfServices({ label: 'redis', plan: 'large' }) 
+```
+will return
+```js
+[{
+  "label": "redis",
+  "name": "redis2",
+  "plan": "large",
+  "tags": ["redis", "store"],
+  "credentials": { ... }
+}]
+```
+or this
+```js
+cfServices({ tags: ['store'] }) 
+```
+will return
+```js
+[
+  {
+    "label": "postgres",
+    "name": "postgres2",
+    "plan": "large",
+    "tags": ["postgresql", "sql", "store"],
+    "credentials": { ... }
+  },
+  {
+    "label": "redis",
+    "name": "redis2",
+    "plan": "large",
+    "tags": ["redis", "store"],
+    "credentials": { ... }
+  }
+]
+```
 
 ### Local execution
 
+The ability to test your application locally outside Cloud Foundry is important as it improves turnaround time and hence developer productivity.
+
+One option is to use a tool like [dotenv] that mocks the process environment. The problem with solutions like this is that they polute your productive code with code that is used only during testing.
+
+A better approach is to setup the process environment (VCAP_SERVICES) in a similar way to Cloud Foundry. Then it is completely transparent to your app if it is running locally or in Cloud Foundry. You can do this in a shell script or using some tool like [fireup] which supports multiline environment variables.
+
 ## API
 
+## License
+[MIT](LICENSE)
+
+## See Also
+[Proposal for named service bindings][4]
 
 [Cloud Foundry]:https://www.cloudfoundry.org/
-[2]:https://docs.cloudfoundry.org/devguide/services/
 [VCAP_SERVICES]:https://docs.cloudfoundry.org/devguide/deploy-apps/environment-variable.html#VCAP-SERVICES
+[dotenv]:https://www.npmjs.com/package/dotenv
+[fireup]:https://github.com/dotchev/fireup
+[2]:https://docs.cloudfoundry.org/devguide/services/
+[3]:https://docs.google.com/presentation/d/1yCcZLyXGMAEGa3q-qZ6XIDR2zUD8jsYfjDNwjjY5yIs/edit?usp=sharing
+[4]:https://github.com/dotchev/cf-named-binding
