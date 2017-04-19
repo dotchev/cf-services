@@ -165,6 +165,13 @@ A better approach is to setup the process environment (VCAP_SERVICES) in a simil
 
 ## API
 
+### `cfServices([query])`
+Parses *VCAP_SERVICES* environment variable and returns matching service bindings.
+* if `query` argument is not provided, returns a flat object of service bindings using instance names as keys
+* if `query` is a string, returns the binding with the same instance name or `undefined` if there is no match
+* if `query` is an object, returns an array of service bindings matching the given object
+* throws an error if *VCAP_SERVICES* is not defined or its value is not a valid JSON string
+
 ## Alternative 
 
 Instead of this package, you can use lodash (which you probably already require in your code):

@@ -11,6 +11,10 @@ process.env.VCAP_SERVICES = 'ala-bala';
 tap.throws(() => cfServices(), /VCAP_SERVICES.*JSON/,
   'Throws if VCAP_SERVICES is not a valid JSON string');
 
+process.env.VCAP_SERVICES = '5';
+tap.same(cfServices(), {}, 
+  'Returns an empty object if VCAP_SERVICES is not an object');
+
 process.env.VCAP_SERVICES = '{ "a":"x", "b":"y" }';
 tap.same(cfServices(), {}, 
   'Returns an empty object if VCAP_SERVICES does not contain the right structure');
