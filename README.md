@@ -174,7 +174,7 @@ Parses *VCAP_SERVICES* environment variable and returns matching service binding
 
 ## Alternative 
 
-Instead of this package, you can use lodash (which you probably already require in your code):
+Instead of this package, you can use *lodash* (which you probably already require in your code):
 ```js
 const _ = require('lodash');
 
@@ -183,7 +183,7 @@ let svc = _.keyBy(_.flatMap(vcapServices), 'name');
 let redis = svc.redis1;
 let postgres = _.filter(svc, {tags: ['sql']})[0];
 ```
-Actually this what this package is [using internally](index.js).
+Actually this is what this package is [using internally](index.js).
 So why remember those APIs, when you can just use this simple package.
 
 ## License
