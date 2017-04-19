@@ -10,7 +10,7 @@ Cloud Foundry provides the credentials of bound [service instances][2] via
 Notice that *VCAP_SERVICES* object uses service names as keys.
 Since multiple instances of the same service can be bound to one application,
 the property values are arrays of service bindings.
-This makes it uncomfortable for applications to lookup required
+This makes it inconvenient for applications to lookup required
 service bindings in a reliable way.
 
 See [this presentation][3] for more details.
