@@ -1,3 +1,6 @@
+[![npm](https://img.shields.io/npm/v/cf-services.svg)](https://www.npmjs.com/package/cf-services)
+[![Build Status](https://travis-ci.org/dotchev/cf-services.svg?branch=master)](https://travis-ci.org/dotchev/cf-services)
+
 # cf-services
 Simple node package to lookup bound services in [Cloud Foundry]
 
