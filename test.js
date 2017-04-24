@@ -8,7 +8,7 @@ tap.throws(() => cfServices(), /VCAP_SERVICES/,
   'Throws if VCAP_SERVICES is not defined');
 
 process.env.VCAP_SERVICES = 'ala-bala';
-tap.throws(() => cfServices(), /VCAP_SERVICES.*JSON/,
+tap.throws(() => cfServices(), /VCAP_SERVICES/,
   'Throws if VCAP_SERVICES is not a valid JSON string');
 
 process.env.VCAP_SERVICES = '5';
