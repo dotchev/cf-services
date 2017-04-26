@@ -78,7 +78,7 @@ A better approach is to setup the process environment (VCAP_SERVICES) in a simil
 Parses *VCAP_SERVICES* environment variable and returns matching service bindings.
 * if `query` argument is not provided, returns a flat object of service bindings using instance names as keys
 * if `query` is a string, returns the binding with the same instance name or `undefined` if there is no match
-* if `query` is an object or function, returns an array of service bindings matching the given query as implemented in [_.filter](5).
+* if `query` is an object or function, returns an array of service bindings matching the given query as implemented in [_.filter][5].
 * throws an error if *VCAP_SERVICES* is not defined or its value is not a valid JSON string
 
 ## Alternatives
@@ -96,7 +96,7 @@ Actually this is what this package is [using internally](index.js).
 So why remember those APIs, when you can just use this simple package.
 
 This package is similar to [cfenv] but is simpler as it is focused only on service bindings.
-Also this package provides easy filtering of service bindings powered by *lodash* [filter](5).
+Also this package provides easy filtering of service bindings powered by *lodash* [filter][5].
 
 ## License
 [MIT](LICENSE)
