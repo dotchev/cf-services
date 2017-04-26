@@ -58,6 +58,11 @@ or use a custom function to filter the bindings:
 var matches = cfServices(binding => 
   binding.label === 'redis' || binding.tags.includes('redis')); 
 ```
+Finally, if called without arguments, it will return all bindings keyed by their names:
+```js
+var bindings = cfServices();
+// bindings = { 'my-redis1': {...}, 'my-redis2': {...}, ... }
+```
 
 ## Local execution
 
@@ -106,4 +111,4 @@ This package is similar to [cfenv] but is simpler as it is focused only on servi
 [2]:https://docs.cloudfoundry.org/devguide/services/
 [3]:https://docs.google.com/presentation/d/1yCcZLyXGMAEGa3q-qZ6XIDR2zUD8jsYfjDNwjjY5yIs/edit?usp=sharing
 [4]:https://github.com/dotchev/cf-named-binding
-[5]:https://lodash.com/docs/4.17.4#filter
+[5]:https://lodash.com/docs#filter
