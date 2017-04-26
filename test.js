@@ -94,3 +94,5 @@ tap.same(cfServices({ tags: ['db', 'sql'] }), [postgres2],
 tap.same(cfServices({ label: 'redis', plan: 'large' }), [redis2],
   'Returns all servce bindings with matching label and plan');
 
+tap.same(cfServices(binding => /postgre/.test(binding.label)), [postgres1, postgres2],
+  'Returns all servce bindings matching a custom filter function');

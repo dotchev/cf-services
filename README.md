@@ -5,8 +5,7 @@
 Simple node package to lookup bound services in [Cloud Foundry]
 
 ## Background
-Cloud Foundry provides the credentials of bound [service instances][2] via
-[VCAP_SERVICES] environment variable.
+Cloud Foundry provides an application with the credentials of bound [service instances][2] via environment variable [VCAP_SERVICES].
 
 ![VCAP_SERVICES](VCAP_SERVICES.png)
 
@@ -25,144 +24,46 @@ npm install --save cf-services
 ```
 
 ## Usage
+If you bind a service to your app like this:
+```sh
+cf create-service redis small my-redis
+cf bind-service my-app my-redis
+```
+You can get this binding in your app like this:
 ```js
-const cfServices = require('cf-services');
-```
-For the following examples let's assume that environment variable VCAP_SERVICES has this value:
-```json
-{
-  "postgres": [
-    {
-      "label": "postgres",
-      "name": "postgres1",
-      "plan": "small",
-      "tags": ["postgresql", "sql", "db"],
-      "credentials": { ... }
-    },
-    {
-      "label": "postgres",
-      "name": "postgres2",
-      "plan": "large",
-      "tags": ["postgresql", "sql", "store"],
-      "credentials": { ... }
-    }
-  ],
-  "redis": [
-    {
-      "label": "redis",
-      "name": "redis1",
-      "plan": "small",
-      "tags": ["redis", "key-valye", "in-memory"],
-      "credentials": { ... }
-    },
-    {
-      "label": "redis",
-      "name": "redis2",
-      "plan": "large",
-      "tags": ["redis", "store"],
-      "credentials": { ... }
-    }
-  ]
-}
-```
-Parse *VCAP_SERVICES* and convert it to a flat object of service bindings using instance names as keys.
-```js
-let services = cfServices();
-```
-this will return:
-```json
-{
-  "postgres1": {
-    "label": "postgres",
-    "name": "postgres1",
-    "plan": "small",
-    "tags": ["postgresql", "sql", "db"],
-    "credentials": { ... }
-  },
-  "postgres2": {
-    "label": "postgres",
-    "name": "postgres2",
-    "plan": "large",
-    "tags": ["postgresql", "sql", "store"],
-    "credentials": { ... }
-  },
-  "redis1": {
-    "label": "redis",
-    "name": "redis1",
-    "plan": "small",
-    "tags": ["redis", "key-valye", "in-memory"],
-    "credentials": { ... }
-  },
-  "redis2": {
-    "label": "redis",
-    "name": "redis2",
-    "plan": "large",
-    "tags": ["redis", "store"],
-    "credentials": { ... }
-  }
-}
-```
-Now you can pick a binding directly like this
-```js
-let redis = services.redis1
+var cfServices = require('cf-services');
+
+var redis = cfServices('my-redis');
+// redis = { label: '...', name: 'my-redis', credentials: {...}, ... }
 ```
 Unfortunately the instance name is rarely known in advance, so you may pass it as a separate environment variable:
-```js
-let redis = services[process.env.REDIS_SERVICE_NAME];
+```sh
+cf set-env my-app REDIS_SERVICE_NAME my-redis
 ```
-To achieve this you can use a *manifest.yml* like this:
-```yml
----
-  ...
-  env:
-    REDIS_SERVICE_NAME: redis1
-  services:
-    - redis1
-```
-You can also look up service bindings with matching properties.
-For example this
+Then grab it in your app like this:
 ```js
-cfServices({ label: 'redis', plan: 'large' }) 
+var redis = cfServices(process.env.REDIS_SERVICE_NAME);
 ```
-will return
+You can also look up service bindings with matching properties:
 ```js
-[{
-  "label": "redis",
-  "name": "redis2",
-  "plan": "large",
-  "tags": ["redis", "store"],
-  "credentials": { ... }
-}]
+var matches = cfServices({ label: 'redis', plan: 'large' });
+var redis = matches[i];
 ```
-or this
+or get bindings with a certain tag:
 ```js
-cfServices({ tags: ['store'] }) 
+var matches = cfServices({ tags: ['store'] }); 
 ```
-will return
+or use a custom function to filter the bindings:
 ```js
-[
-  {
-    "label": "postgres",
-    "name": "postgres2",
-    "plan": "large",
-    "tags": ["postgresql", "sql", "store"],
-    "credentials": { ... }
-  },
-  {
-    "label": "redis",
-    "name": "redis2",
-    "plan": "large",
-    "tags": ["redis", "store"],
-    "credentials": { ... }
-  }
-]
+var matches = cfServices(binding => 
+  binding.label === 'redis' || binding.tags.includes('redis')); 
 ```
 
-### Local execution
+## Local execution
 
 The ability to test your application locally outside Cloud Foundry is important as it improves turnaround time and hence developer productivity.
 
-One option is to use a tool like [dotenv] that mocks the process environment. The problem with solutions like this is that they polute your productive code with code that is used only during testing.
+One option is to use a tool like [dotenv] that mocks the process environment. The problem with solutions like this is that they pollute your productive code with code that is used only during testing.
 
 A better approach is to setup the process environment (VCAP_SERVICES) in a similar way to Cloud Foundry. Then it is completely transparent to your app if it is running locally or in Cloud Foundry. You can do this in a shell script or using some tool like [fireup] which supports multiline environment variables.
 
@@ -172,22 +73,24 @@ A better approach is to setup the process environment (VCAP_SERVICES) in a simil
 Parses *VCAP_SERVICES* environment variable and returns matching service bindings.
 * if `query` argument is not provided, returns a flat object of service bindings using instance names as keys
 * if `query` is a string, returns the binding with the same instance name or `undefined` if there is no match
-* if `query` is an object, returns an array of service bindings matching the given object
+* if `query` is an object or function, returns an array of service bindings matching the given query as implemented in [_.filter](5).
 * throws an error if *VCAP_SERVICES* is not defined or its value is not a valid JSON string
 
-## Alternative 
+## Alternatives
 
 Instead of this package, you can use *lodash* (which you probably already require in your code):
 ```js
 const _ = require('lodash');
 
-let vcapServices = JSON.parse(process.env.VCAP_SERVICES);
-let svc = _.keyBy(_.flatMap(vcapServices), 'name');
-let redis = svc.redis1;
-let postgres = _.filter(svc, {tags: ['sql']})[0];
+var vcapServices = JSON.parse(process.env.VCAP_SERVICES);
+var svc = _.keyBy(_.flatMap(vcapServices), 'name');
+var redis = svc.redis1;
+var postgres = _.filter(svc, {tags: ['sql']})[0];
 ```
 Actually this is what this package is [using internally](index.js).
 So why remember those APIs, when you can just use this simple package.
+
+This package is similar to [cfenv] but is simpler as it is focused only on service bindings.
 
 ## License
 [MIT](LICENSE)
@@ -199,6 +102,8 @@ So why remember those APIs, when you can just use this simple package.
 [VCAP_SERVICES]:https://docs.cloudfoundry.org/devguide/deploy-apps/environment-variable.html#VCAP-SERVICES
 [dotenv]:https://www.npmjs.com/package/dotenv
 [fireup]:https://github.com/dotchev/fireup
+[cfenv]:https://github.com/cloudfoundry-community/node-cfenv
 [2]:https://docs.cloudfoundry.org/devguide/services/
 [3]:https://docs.google.com/presentation/d/1yCcZLyXGMAEGa3q-qZ6XIDR2zUD8jsYfjDNwjjY5yIs/edit?usp=sharing
 [4]:https://github.com/dotchev/cf-named-binding
+[5]:https://lodash.com/docs/4.17.4#filter

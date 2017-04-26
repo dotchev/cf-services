@@ -15,12 +15,11 @@ function services(query) {
       err.message);
   }
   let svc = _(vcapServices).flatMap().filter(x => x.name).keyBy('name').value();
-  // let svc = _.keyBy(_.flatMap(vcapServices), 'name');
+  if (!query) {
+    return svc;
+  }
   if (typeof query === 'string') {
     return svc[query];
   }
-  if (query && typeof query === 'object') {
-    return _.filter(svc, query);
-  }
-  return svc;
+  return _.filter(svc, query);
 }
