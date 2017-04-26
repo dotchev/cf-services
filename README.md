@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/dotchev/cf-services.svg?branch=master)](https://travis-ci.org/dotchev/cf-services)
 
 # cf-services
-Simple node package to lookup bound services in [Cloud Foundry]
+Simple node package to look up bound services in [Cloud Foundry]
 
 ## Background
 Cloud Foundry provides an application with the credentials of bound [service instances][2] via environment variable [VCAP_SERVICES].
@@ -12,7 +12,7 @@ Cloud Foundry provides an application with the credentials of bound [service ins
 Notice that *VCAP_SERVICES* object uses service names as keys.
 Since multiple instances of the same service can be bound to one application,
 the property values are arrays of service bindings.
-This makes it inconvenient for applications to lookup required
+This makes it inconvenient for applications to look up required
 service bindings in a reliable way.
 
 See [this presentation][3] for more details.
@@ -96,6 +96,7 @@ Actually this is what this package is [using internally](index.js).
 So why remember those APIs, when you can just use this simple package.
 
 This package is similar to [cfenv] but is simpler as it is focused only on service bindings.
+Also this package provides easy filtering of service bindings powered by *lodash* [filter](5).
 
 ## License
 [MIT](LICENSE)
