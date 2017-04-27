@@ -47,7 +47,8 @@ var redis = cfServices(process.env.REDIS_SERVICE_NAME);
 You can also look up service bindings with matching properties:
 ```js
 var matches = cfServices({ label: 'redis', plan: 'large' });
-var redis = matches[i];
+assert(matches.length === 1, `${matches.length} services bound`);
+var redis = matches[0];
 ```
 or get bindings with a certain tag:
 ```js
@@ -90,7 +91,7 @@ const _ = require('lodash');
 var vcapServices = JSON.parse(process.env.VCAP_SERVICES);
 var svc = _.keyBy(_.flatMap(vcapServices), 'name');
 var redis = svc.redis1;
-var postgres = _.filter(svc, {tags: ['sql']})[0];
+var postgres = _.filter(svc, {tags: ['sql']})[i];
 ```
 Actually this is what this package is [using internally](index.js).
 So why remember those APIs, when you can just use this simple package.
