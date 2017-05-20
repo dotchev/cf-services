@@ -44,25 +44,37 @@ Then grab it in your app like this:
 ```js
 var redis = cfServices(process.env.REDIS_SERVICE_NAME);
 ```
-You can also look up service bindings with matching properties:
+You can also look up a service binding with matching properties:
 ```js
-var matches = cfServices({ label: 'redis', plan: 'large' });
-assert(matches.length === 1, `${matches.length} services bound`);
-var redis = matches[0];
+var redis = cfServices({ label: 'redis', plan: 'large' });
 ```
-or get bindings with a certain tag:
+or get the binding with a certain tag:
 ```js
-var matches = cfServices({ tags: ['store'] }); 
+var store = cfServices({ tags: ['store'] }); 
 ```
 or use a custom function to filter the bindings:
 ```js
-var matches = cfServices(binding => 
+var redis = cfServices(binding => 
   binding.label === 'redis' || binding.tags.includes('redis')); 
 ```
 Finally, if called without arguments, it will return all bindings keyed by their names:
 ```js
 var bindings = cfServices();
 // bindings = { 'my-redis1': {...}, 'my-redis2': {...}, ... }
+```
+
+**Note** that `cfServices` will throw an exception if no service binding matches the given criteria or multiple service bindings match the criteria. This way you don't need to perform additional checks in your code. You know that if the call succeeds, there is exactly one match.
+
+In some cases you don't want to deal with exceptions. Then you can filter service bindings:
+```js
+var filterServices = require('cf-services').filter;
+
+var matches = filterServices({ tags: ['redis'] }); 
+if (matches === 1) {
+  let redis = matches[0];
+} else {
+  // handle misconfiguration
+}
 ```
 
 ## Local execution
@@ -76,11 +88,23 @@ A better approach is to setup the process environment (VCAP_SERVICES) in a simil
 ## API
 
 ### `cfServices([query])`
-Parses *VCAP_SERVICES* environment variable and returns matching service bindings.
+Parses *VCAP_SERVICES* environment variable and returns the matching service binding.
 * if `query` argument is not provided, returns a flat object of service bindings using instance names as keys
-* if `query` is a string, returns the binding with the same instance name or `undefined` if there is no match
-* if `query` is an object or function, returns an array of service bindings matching the given query as implemented in [_.filter][5].
-* throws an error if *VCAP_SERVICES* is not defined or its value is not a valid JSON string
+* if `query` is a string, returns the binding with the same instance name
+* if `query` is an object, returns the service binding with matching properties, see [_.filter][5].
+* if `query` is a function, it should take a service binding as argument and return a boolean. `cfServices` then returns the service binding for which the `query` function returns `true`.
+* throws an error if:
+  * *VCAP_SERVICES* is not defined
+  * *VCAP_SERVICES* value is not a valid JSON string
+  * No service binding matches the `query`
+  * Multiple service bindings match the `query`
+
+### `cfServices.filter(query, [description])`
+* `query` - object or filter function
+* `description` - optional query description used in error messages
+* _returns_ - array of matching service bindings, empty if there are no matches
+
+Unlike `cfServices`, this function will not throw an error if there are no matches or multiple matches are found.
 
 ## Alternatives
 
@@ -94,7 +118,7 @@ var redis = svc.redis1;
 var postgres = _.filter(svc, {tags: ['sql']})[i];
 ```
 Actually this is what this package is [using internally](index.js).
-So why remember those APIs, when you can just use this simple package.
+So why remember those APIs, when you can just use one simple function.
 
 This package is similar to [cfenv] but is simpler as it is focused only on service bindings.
 Also this package provides easy filtering of service bindings powered by *lodash* [filter][5].
