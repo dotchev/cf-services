@@ -107,6 +107,10 @@ tap.test('cfServices', t => {
     /No.*S3/,
     'Throws, if no service binding matches the given filter function');
 
+  t.throws(() => cfServices(binding => /res/.test(binding.label)),
+    /Multiple.*filter.*postgres1.*postgres2/,
+    'Throws, if multiple service bindings match the given filter function');
+
   t.end();
 });
 
