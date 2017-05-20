@@ -4,6 +4,8 @@
 # cf-services
 Simple node package to look up bound services in [Cloud Foundry]
 
+The [change log](CHANGELOG.md) describes the changes between versions.
+
 ## Background
 Cloud Foundry provides an application with the credentials of bound [service instances][2] via environment variable [VCAP_SERVICES].
 
