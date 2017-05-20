@@ -3,22 +3,6 @@
 const tap = require('tap');
 const cfServices = require('./');
 
-delete process.env.VCAP_SERVICES;
-tap.throws(() => cfServices(), /VCAP_SERVICES/,
-  'Throws if VCAP_SERVICES is not defined');
-
-process.env.VCAP_SERVICES = 'ala-bala';
-tap.throws(() => cfServices(), /VCAP_SERVICES/,
-  'Throws if VCAP_SERVICES is not a valid JSON string');
-
-process.env.VCAP_SERVICES = '5';
-tap.same(cfServices(), {}, 
-  'Returns an empty object if VCAP_SERVICES is not an object');
-
-process.env.VCAP_SERVICES = '{ "a":"x", "b":"y" }';
-tap.same(cfServices(), {}, 
-  'Returns an empty object if VCAP_SERVICES does not contain the right structure');
-
 const postgres1 = {
   label: 'postgres',
   plan: 'small',
@@ -58,7 +42,7 @@ const redis2 = {
   }
 };
 
-process.env.VCAP_SERVICES = JSON.stringify({
+const VCAP_SERVICES = JSON.stringify({
   postgres: [
     postgres1,
     postgres2
@@ -69,30 +53,104 @@ process.env.VCAP_SERVICES = JSON.stringify({
   ]
 });
 
-tap.same(cfServices(), {
-  postgres1,
-  postgres2,
-  redis1,
-  redis2
-}, 'Returns an object with all service bindings using instance names as keys');
+tap.test('cfServices', t => {
+  delete process.env.VCAP_SERVICES;
+  t.throws(() => cfServices(), /VCAP_SERVICES/,
+    'Throws if VCAP_SERVICES is not defined');
 
-tap.same(cfServices('redis1'), redis1,
-  'Returns the binding for the service instance with given name');
-tap.equal(cfServices('nosuch'), undefined,
-  'Returns undefined, if there is no service instance with given name');
+  process.env.VCAP_SERVICES = 'ala-bala';
+  t.throws(() => cfServices(), /VCAP_SERVICES/,
+    'Throws if VCAP_SERVICES is not a valid JSON string');
 
-tap.same(cfServices({ name: 'redis1' }), [redis1],
-  'Returns all servce bindings with matching instance name');
-tap.same(cfServices({ name: 'nosuch' }), [],
-  'Returns an empty array, if there are no matching servce bindings');
+  process.env.VCAP_SERVICES = '5';
+  t.strictSame(cfServices(), {},
+    'Returns an empty object if VCAP_SERVICES is not an object');
 
-tap.same(cfServices({ tags: ['sql'] }), [postgres1, postgres2],
-  'Returns all servce bindings with matching tag');
-tap.same(cfServices({ tags: ['db', 'sql'] }), [postgres2],
-  'Returns all servce bindings with matching tags');
+  process.env.VCAP_SERVICES = '{ "a":"x", "b":"y" }';
+  t.strictSame(cfServices(), {},
+    'Returns an empty object if VCAP_SERVICES does not contain the right structure');
 
-tap.same(cfServices({ label: 'redis', plan: 'large' }), [redis2],
-  'Returns all servce bindings with matching label and plan');
+  process.env.VCAP_SERVICES = VCAP_SERVICES;
 
-tap.same(cfServices(binding => /postgre/.test(binding.label)), [postgres1, postgres2],
-  'Returns all servce bindings matching a custom filter function');
+  t.strictSame(cfServices(), {
+    postgres1,
+    postgres2,
+    redis1,
+    redis2
+  }, 'Returns an object with all service bindings using instance names as keys');
+
+  t.strictSame(cfServices('redis1'), redis1,
+    'Returns the binding for the service instance with given name');
+  
+  t.throws(() => cfServices('nosuch'),
+    /No service instance with name nosuch/,
+    'Throws, if there is no service instance with given name');
+
+  t.throws(() => cfServices({ tags: ['sql'] }),
+    /Multiple.*sql.*postgres1.*postgres2/,
+    'Throws, if multiple service bindings match the given query');
+  
+  t.throws(() => cfServices({ tags: ['sql'] }, 'SQL db'),
+    /Multiple.*SQL db.*postgres1.*postgres2/,
+    'Includes the query description the error message');
+  
+  t.strictSame(cfServices({ tags: ['db', 'sql'] }), postgres2,
+    'Returns the single service binding matching the query');
+
+  t.strictSame(cfServices({ label: 'redis', plan: 'large' }), redis2,
+    'Returns the service binding with matching label and plan');
+
+  t.strictSame(cfServices(binding => /res2/.test(binding.name)), postgres2,
+    'Returns the single service binding matching the filter function');
+
+  t.throws(() => cfServices(binding => /s3/.test(binding.label), 'S3'),
+    /No.*S3/,
+    'Throws, if no service binding matches the given filter function');
+
+  t.throws(() => cfServices(binding => /res/.test(binding.label)),
+    /Multiple.*filter.*postgres1.*postgres2/,
+    'Throws, if multiple service bindings match the given filter function');
+
+  t.end();
+});
+
+tap.test('cfServices.filter', t => {
+  delete process.env.VCAP_SERVICES;
+  t.throws(() => cfServices.filter(), /VCAP_SERVICES/,
+    'Throws if VCAP_SERVICES is not defined');
+
+  process.env.VCAP_SERVICES = 'ala-bala';
+  t.throws(() => cfServices.filter(), /VCAP_SERVICES/,
+    'Throws if VCAP_SERVICES is not a valid JSON string');
+
+  process.env.VCAP_SERVICES = '5';
+  t.strictSame(cfServices.filter(), [],
+    'Returns an empty array if VCAP_SERVICES is not an object');
+
+  process.env.VCAP_SERVICES = '{ "a":"x", "b":"y" }';
+  t.strictSame(cfServices.filter(), [],
+    'Returns an empty array if VCAP_SERVICES does not contain the right structure');
+
+  process.env.VCAP_SERVICES = VCAP_SERVICES;
+  t.strictSame(cfServices.filter(), [postgres1, postgres2, redis1, redis2],
+    'Returns all service bindings when called without arguments');
+  t.strictSame(cfServices.filter('redis1'), [],
+    'Returns an empty array when called with a string');
+  t.strictSame(cfServices.filter({ name: 'redis1' }), [redis1],
+    'Returns all servce bindings with matching instance name');
+  t.strictSame(cfServices.filter({ name: 'nosuch' }), [],
+    'Returns an empty array, if there are no matching servce bindings');
+
+  t.strictSame(cfServices.filter({ tags: ['sql'] }), [postgres1, postgres2],
+    'Returns all servce bindings with matching tag');
+  t.strictSame(cfServices.filter({ tags: ['db', 'sql'] }), [postgres2],
+    'Returns all servce bindings with matching tags');
+
+  t.strictSame(cfServices.filter({ label: 'redis', plan: 'large' }), [redis2],
+    'Returns all servce bindings with matching label and plan');
+
+  t.strictSame(cfServices.filter(binding => /postgre/.test(binding.label)), [postgres1, postgres2],
+    'Returns all servce bindings matching a custom filter function');
+  
+  t.end();
+});
