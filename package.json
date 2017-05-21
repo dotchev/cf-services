@@ -1,7 +1,7 @@
 {
   "name": "cf-services",
   "version": "2.0.1",
-  "description": "Simple node package to lookup bound services in Cloud Foundry",
+  "description": "Simple and reliable lookup of bound services for Node.js apps in Cloud Foundry",
   "main": "index.js",
   "scripts": {
     "test": "tap --100 test.js"

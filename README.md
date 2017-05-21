@@ -2,7 +2,7 @@
 [![Build Status](https://travis-ci.org/dotchev/cf-services.svg?branch=master)](https://travis-ci.org/dotchev/cf-services)
 
 # cf-services
-Simple node package to look up bound services in [Cloud Foundry]
+Simple and reliable lookup of bound services for Node.js apps in [Cloud Foundry]
 
 The [change log](CHANGELOG.md) describes the changes between versions.
 
