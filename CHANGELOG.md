@@ -10,4 +10,5 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - `cfServices` does not return an array but a service binding, if a single match is found. Otherwise it throws an error.
 
 ### Added
+- `description` argument to `cfServices`
 - `cfServices.filter` function to get all matching service bindings

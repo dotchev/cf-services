@@ -59,19 +59,20 @@ or use a custom function to filter the bindings:
 var redis = cfServices(binding => 
   binding.label === 'redis' || binding.tags.includes('redis')); 
 ```
-Finally, if called without arguments, it will return all bindings keyed by their names:
+Finally, if called without arguments, it will return a flat object of all service bindings keyed by their names:
 ```js
 var bindings = cfServices();
 // bindings = { 'my-redis1': {...}, 'my-redis2': {...}, ... }
 ```
+Notice that this is different from `VCAP_SERVICES` which uses service names (`label` property) as keys.
 
 **Note** that `cfServices` will throw an exception if no service binding matches the given criteria or multiple service bindings match the criteria. This way you don't need to perform additional checks in your code. You know that if the call succeeds, there is exactly one match.
 
-In some cases you don't want to deal with exceptions. Then you can filter service bindings:
-```js
-var filterServices = require('cf-services').filter;
+In case of inconsistent configuration, an application should abort during startup with a clear error message instead of keep running and fail later during productive use. Even worse, the application might seem to work without errors but produce wrong results which are hard to revert. For example an application writing to a wrong database.
 
-var matches = filterServices({ tags: ['redis'] }); 
+In some cases you don't want to deal with exceptions. Then you can filter service bindings and deal with varying number of matches:
+```js
+var matches = cfServices.filter({ tags: ['redis'] }); 
 if (matches === 1) {
   let redis = matches[0];
 } else {
@@ -89,24 +90,42 @@ A better approach is to setup the process environment (VCAP_SERVICES) in a simil
 
 ## API
 
-### `cfServices([query])`
-Parses *VCAP_SERVICES* environment variable and returns the matching service binding.
-* if `query` argument is not provided, returns a flat object of service bindings using instance names as keys
-* if `query` is a string, returns the binding with the same instance name
-* if `query` is an object, returns the service binding with matching properties, see [_.filter][5].
-* if `query` is a function, it should take a service binding as argument and return a boolean. `cfServices` then returns the service binding for which the `query` function returns `true`.
-* throws an error if:
+### `cfServices([query, [description]])`
+* `query`
+  * if `query` argument is not provided, returns a flat object of service bindings using instance names as keys
+  * if `query` is a string, returns the binding with the same instance name
+  * if `query` is an object, returns the service binding with matching properties, see [_.filter][5].
+  * if `query` is a function, it should take a service binding as argument and return a boolean. `cfServices` then returns the service binding for which the `query` function returns `true`.
+* `description` - optional query description used in error messages
+* _returns_ the service binding matching the `query` or an object with all service bindings if `query` is not provided
+* _throws_ an error if:
   * *VCAP_SERVICES* is not defined
   * *VCAP_SERVICES* value is not a valid JSON string
   * No service binding matches the `query`
   * Multiple service bindings match the `query`
 
-### `cfServices.filter(query, [description])`
+Parses *VCAP_SERVICES* environment variable and returns the matching service binding.
+
+For example these two are equivalent except that (1) will throw if there is no service instance with name `some-instance` while (2) will return `undefined`.
+```js
+cfServices('some-name')   // (1)
+cfServices()['some-name'] // (2)
+```
+
+### `cfServices.filter(query)`
 * `query` - object or filter function
-* `description` - optional query description used in error messages
-* _returns_ - array of matching service bindings, empty if there are no matches
+* _returns_ an array of matching service bindings, empty if there are no matches
+* _throws_ an error if:
+  * *VCAP_SERVICES* is not defined
+  * *VCAP_SERVICES* value is not a valid JSON string
 
 Unlike `cfServices`, this function will not throw an error if there are no matches or multiple matches are found.
+
+```js
+cfServices.filter(query)
+// is equivalent to
+_.filter(cfServices(), query)
+```
 
 ## Alternatives
 
