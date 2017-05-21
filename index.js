@@ -45,5 +45,5 @@ function parseServices() {
     throw new Error('Could not parse environment variable VCAP_SERVICES: ' +
       err.message);
   }
-  return _(vcapServices).flatMap().filter(x => x.name).keyBy('name').value();
+  return _(vcapServices).flatMap().filter('name').keyBy('name').value();
 }
